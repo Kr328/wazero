@@ -5,12 +5,11 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/tetratelabs/wazero/api"
-	experimental "github.com/tetratelabs/wazero/experimental"
+	"github.com/tetratelabs/wazero/experimental"
 	"github.com/tetratelabs/wazero/internal/ieee754"
 	"github.com/tetratelabs/wazero/internal/leb128"
 	"github.com/tetratelabs/wazero/internal/wasmdebug"
@@ -159,7 +158,7 @@ type Module struct {
 	//
 	// Note: This section currently has no serialization format, so is not encodable.
 	// See https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#host-functions%E2%91%A2
-	HostFunctionSection []*reflect.Value
+	HostFunctionSection []api.Function
 
 	// elementSegments are built on Validate when SectionIDElement is non-empty and all inputs are valid.
 	//

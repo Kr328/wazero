@@ -2,10 +2,10 @@ package wasm
 
 import (
 	"fmt"
-	"reflect"
 	"sort"
 	"strings"
 
+	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/experimental"
 	"github.com/tetratelabs/wazero/internal/wasmdebug"
 )
@@ -84,7 +84,7 @@ func addFuncs(m *Module, nameToGoFunc map[string]interface{}, enabledFeatures Fe
 	}
 	m.NameSection.FunctionNames = make([]*NameAssoc, 0, funcCount)
 	m.FunctionSection = make([]Index, 0, funcCount)
-	m.HostFunctionSection = make([]*reflect.Value, 0, funcCount)
+	m.HostFunctionSection = make([]api.Function, 0, funcCount)
 
 	// Sort names for consistent iteration
 	for k := range nameToGoFunc {
@@ -94,14 +94,20 @@ func addFuncs(m *Module, nameToGoFunc map[string]interface{}, enabledFeatures Fe
 
 	for idx := Index(0); idx < funcCount; idx++ {
 		name := funcNames[idx]
-		fn := reflect.ValueOf(nameToGoFunc[name])
-		_, functionType, err := getFunctionType(&fn, enabledFeatures)
-		if err != nil {
-			return fmt.Errorf("func[%s] %w", name, err)
+		//fn := reflect.ValueOf(nameToGoFunc[name])
+		//_, functionType, err := getFunctionType(&fn, enabledFeatures)
+		//if err != nil {
+		//	return fmt.Errorf("func[%s] %w", name, err)
+		//}
+		fn := nameToGoFunc[name].(api.Function)
+		ft := &FunctionType{
+			Params:  fn.ParamTypes(),
+			Results: fn.ResultTypes(),
 		}
+		ft.CacheNumInUint64()
 
-		m.FunctionSection = append(m.FunctionSection, m.maybeAddType(functionType))
-		m.HostFunctionSection = append(m.HostFunctionSection, &fn)
+		m.FunctionSection = append(m.FunctionSection, m.maybeAddType(ft))
+		m.HostFunctionSection = append(m.HostFunctionSection, fn)
 		m.ExportSection = append(m.ExportSection, &Export{Type: ExternTypeFunc, Name: name, Index: idx})
 		m.NameSection.FunctionNames = append(m.NameSection.FunctionNames, &NameAssoc{Index: idx, Name: name})
 	}
@@ -174,7 +180,7 @@ func (m *Module) buildHostFunctions(
 	for idx, typeIndex := range m.FunctionSection {
 		fn := m.HostFunctionSection[idx]
 		f := &FunctionInstance{
-			Kind:   kind(fn.Type()),
+			Kind:   FunctionKindGoContext,
 			Type:   m.TypeSection[typeIndex],
 			GoFunc: fn,
 			Idx:    Index(idx),

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"math"
 	"math/bits"
-	"reflect"
 	"strings"
 	"sync"
 	"unsafe"
 
+	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/experimental"
 	"github.com/tetratelabs/wazero/internal/buildoptions"
 	"github.com/tetratelabs/wazero/internal/moremath"
@@ -168,13 +168,13 @@ type callFrame struct {
 
 type code struct {
 	body   []*interpreterOp
-	hostFn *reflect.Value
+	hostFn api.Function
 }
 
 type function struct {
 	source *wasm.FunctionInstance
 	body   []*interpreterOp
-	hostFn *reflect.Value
+	hostFn api.Function
 }
 
 // functionFromUintptr resurrects the original *function from the given uintptr
